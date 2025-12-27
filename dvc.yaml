@@ -26,6 +26,8 @@ stages:
     deps:
       - src/train.py
       - data/processed/train.csv
+    outs:
+      - models/model.joblib
 
   evaluate:
     cmd: python src/evaluate.py
