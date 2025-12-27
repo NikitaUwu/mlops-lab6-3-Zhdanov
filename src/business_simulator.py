@@ -137,131 +137,108 @@ def calculate_roi(simulation_results, cost_per_request=10, num_requests_per_day=
     }
 
 
-'''def visualize_results(simulation_results, roi_results):
- """Визуализирует результаты симуляции и ROI"""
- plt.figure(figsize=(15, 10))
+def visualize_results(simulation_results, roi_results):
+    """Визуализирует результаты симуляции и ROI"""
+    plt.figure(figsize=(15, 10))
 
- # Влияние на время обработки
- plt.subplot(2, 2, 1)
- plt.plot(simulation_results.groupby('day')['base_time'].mean(),
-label='Базовая')
- plt.plot(simulation_results.groupby('day')['model_time'].mean(),
-label='С моделью')
- plt.title('Среднее время обработки запроса')
- plt.xlabel('День')
- plt.ylabel('Минуты')
- plt.legend()
- plt.grid(True
- # Влияние на удовлетворенность
- plt.subplot(2, 2, 2)
- plt.plot(simulation_results.groupby('day')['base_satisfaction'].mean(),
-label='Базовая')
- plt.plot(simulation_results.groupby('day')['model_satisfaction'].mean(),
-label='С моделью')
- plt.title('Удовлетворенность клиентов')
- plt.xlabel('День')
- plt.ylabel('Удовлетворенность')
- plt.legend()
- plt.grid(True)
+    # Влияние на время обработки
+    plt.subplot(2, 2, 1)
+    plt.plot(simulation_results.groupby('day')['base_time'].mean(), label='Базовая')
+    plt.plot(simulation_results.groupby('day')['model_time'].mean(), label='С моделью')
+    plt.title('Среднее время обработки запроса')
+    plt.xlabel('День')
+    plt.ylabel('Минуты')
+    plt.legend()
+    plt.grid(True)
+    # Влияние на удовлетворенность
+    plt.subplot(2, 2, 2)
+    plt.plot(simulation_results.groupby('day')['base_satisfaction'].mean(), label='Базовая')
+    plt.plot(simulation_results.groupby('day')['model_satisfaction'].mean(), label='С моделью')
+    plt.title('Удовлетворенность клиентов')
+    plt.xlabel('День')
+    plt.ylabel('Удовлетворенность')
+    plt.legend()
+    plt.grid(True)
 
- # Влияние на конверсию
- plt.subplot(2, 2, 3)
- plt.plot(simulation_results.groupby('day')['base_conversion'].mean(),
-label='Базовая')
- plt.plot(simulation_results.groupby('day')['model_conversion'].mean(),
-label='С моделью')
- plt.title('Конверсия')
- plt.xlabel('День')
- plt.ylabel('Конверсия')
- plt.legend()
- plt.grid(True)
+    # Влияние на конверсию
+    plt.subplot(2, 2, 3)
+    plt.plot(simulation_results.groupby('day')['base_conversion'].mean(), label='Базовая')
+    plt.plot(simulation_results.groupby('day')['model_conversion'].mean(), label='С моделью')
+    plt.title('Конверсия')
+    plt.xlabel('День')
+    plt.ylabel('Конверсия')
+    plt.legend()
+    plt.grid(True)
 
- # Финансовый анализ
- plt.subplot(2, 2, 4)
- categories = ['Годовая выгода', 'Стоимость разработки', 'Годовые
-затраты']
- values = [
- roi_results['yearly_savings'],
- roi_results['development_cost'],
- roi_results['infrastructure_cost'] + roi_results['maintenance_cost']
- ]
- colors = ['g', 'r', 'orange']
- plt.bar(categories, values, color=colors)
- plt.title('Финансовый анализ')
- plt.ylabel('USD')
- plt.xticks(rotation=15)
+    # Финансовый анализ
+    plt.subplot(2, 2, 4)
+    categories = ['Годовая выгода', 'Стоимость разработки', 'Годовые затраты']
+    values = [
+        roi_results['yearly_savings'],
+        roi_results['development_cost'],
+        roi_results['infrastructure_cost'] + roi_results['maintenance_cost']
+    ]
+    colors = ['g', 'r', 'orange']
+    plt.bar(categories, values, color=colors)
+    plt.title('Финансовый анализ')
+    plt.ylabel('USD')
+    plt.xticks(rotation=15)
 
- plt.tight_layout()
- plt.savefig('business_impact.png')
- plt.show()
+    plt.tight_layout()
+    plt.savefig('business_impact.png')
+    plt.show()
 
- # Визуализация ROI
- plt.figure(figsize=(10, 5))
- metrics = ['ROI', 'Срок окупаемости (мес)']
- values = [roi_results['roi'], roi_results['payback_period_months']]
- plt.bar(metrics, values, color=['b', 'purple'])
- plt.title('Ключевые финансовые показатели')
- plt.ylabel('Значение')
- plt.savefig('roi_analysis.png')
- plt.show()
+    # Визуализация ROI
+    plt.figure(figsize=(10, 5))
+    metrics = ['ROI', 'Срок окупаемости (мес)']
+    values = [roi_results['roi'], roi_results['payback_period_months']]
+    plt.bar(metrics, values, color=['b', 'purple'])
+    plt.title('Ключевые финансовые показатели')
+    plt.ylabel('Значение')
+    plt.savefig('roi_analysis.png')
+    plt.show()
 
 
 def main():
- # Симуляция бизнес-процесса
- simulation_results = simulate_business_process(num_days=30,
-num_requests_per_day=1000)
+    # Симуляция бизнес-процесса
+    simulation_results = simulate_business_process(num_days=30,
+    num_requests_per_day=1000)
 
- # Расчет ROI
- roi_results = calculate_roi(simulation_results, cost_per_request=10,
-num_requests_per_day=1000)
+    # Расчет ROI
+    roi_results = calculate_roi(simulation_results, cost_per_request=10,
+    num_requests_per_day=1000)
 
- # Визуализация результатов
- visualize_results(simulation_results, roi_results)
+    # Визуализация результатов
+    visualize_results(simulation_results, roi_results)
 
- # Сохранение результатов
- simulation_results.to_csv('simulation_results.csv', index=False)
+    # Сохранение результатов
+    simulation_results.to_csv('simulation_results.csv', index=False)
 
- with open('roi_results.json', 'w') as f:
- json.dump(roi_results, f, indent=2)
+    with open('roi_results.json', 'w') as f:
+        json.dump(roi_results, f, indent=2)
 
- # Вывод ключевых результатов
- print("\nКлючевые результаты симуляции:")
- print(f"Среднее время обработки до:
-{simulation_results['base_time'].mean():.2f} мин")
- print(f"Среднее время обработки после:
-{simulation_results['model_time'].mean():.2f} мин")
- print(f"Снижение времени: {(1 -
-simulation_results['model_time'].mean()/simulation_results['base_time'].mean
-())*100:.2f}%")
+    # Вывод ключевых результатов
+    print("\nКлючевые результаты симуляции:")
+    print(f"Среднее время обработки до: {simulation_results['base_time'].mean():.2f} мин")
+    print(f"Среднее время обработки после: {simulation_results['model_time'].mean():.2f} мин")
+    print(f"Снижение времени: {(1 - simulation_results['model_time'].mean()/simulation_results['base_time'].mean())*100:.2f}%")
 
- print(f"\nУдовлетворенность до:
-{simulation_results['base_satisfaction'].mean():.4f}")
- print(f"Удовлетворенность после:
-{simulation_results['model_satisfaction'].mean():.4f}")
- print(f"Увеличение удовлетворенности:
-{(simulation_results['model_satisfaction'].mean() -
-simulation_results['base_satisfaction'].mean())*100:.2f} п.п.")
+    print(f"\nУдовлетворенность до: {simulation_results['base_satisfaction'].mean():.4f}")
+    print(f"Удовлетворенность после: {simulation_results['model_satisfaction'].mean():.4f}")
+    print(f"Увеличение удовлетворенности: {(simulation_results['model_satisfaction'].mean() - simulation_results['base_satisfaction'].mean())*100:.2f} п.п.")
 
- print(f"\nКонверсия до:
-{simulation_results['base_conversion'].mean():.4f}")
-print(f"Конверсия после:
-{simulation_results['model_conversion'].mean():.4f}")
- print(f"Увеличение конверсии:
-{(simulation_results['model_conversion'].mean() -
-simulation_results['base_conversion'].mean())*100:.2f} п.п.")
+    print(f"\nКонверсия до: {simulation_results['base_conversion'].mean():.4f}")
+    print(f"Конверсия после: {simulation_results['model_conversion'].mean():.4f}")
+    print(f"Увеличение конверсии: {(simulation_results['model_conversion'].mean() - simulation_results['base_conversion'].mean())*100:.2f} п.п.")
 
- print("\nФинансовый анализ:")
- print(f"Годовая выгода: ${roi_results['yearly_savings']:,.2f}")
- print(f"Стоимость разработки: ${roi_results['development_cost']:,.2f}")
- print(f"Годовые затраты на инфраструктуру и поддержку:
-${roi_results['infrastructure_cost'] +
-roi_results['maintenance_cost']:,.2f}")
- print(f"ROI: {roi_results['roi']:.2f}%")
- print(f"Срок окупаемости: {roi_results['payback_period_months']:.1f}
-месяцев")
- print(f"Годовая чистая выгода:
-${roi_results['yearly_net_benefit']:,.2f}")
+    print("\nФинансовый анализ:")
+    print(f"Годовая выгода: ${roi_results['yearly_savings']:,.2f}")
+    print(f"Стоимость разработки: ${roi_results['development_cost']:,.2f}")
+    print(f"Годовые затраты на инфраструктуру и поддержку: ${roi_results['infrastructure_cost'] + roi_results['maintenance_cost']:,.2f}")
+    print(f"ROI: {roi_results['roi']:.2f}%")
+    print(f"Срок окупаемости: {roi_results['payback_period_months']:.1f} месяцев")
+    print(f"Годовая чистая выгода: ${roi_results['yearly_net_benefit']:,.2f}")
 
 
 if __name__ == "__main__":
-    main()'''
+    main()

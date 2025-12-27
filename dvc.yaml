@@ -36,3 +36,15 @@ stages:
       - data/processed/test.csv
     metrics:
       - metrics/metrics.json
+
+  monitor:
+    cmd: python src/monitor_drift.py --reference data/processed/train.csv --current data/processed/test.csv --model-path models/model.joblib --out-dir reports
+    deps:
+      - src/monitor_drift.py
+      - data/processed/train.csv
+      - data/processed/test.csv
+      - models/model.joblib
+    outs:
+      - reports/drift_metrics.json
+      - reports/data_drift_evidently.html
+      - reports/evidently_error.txt

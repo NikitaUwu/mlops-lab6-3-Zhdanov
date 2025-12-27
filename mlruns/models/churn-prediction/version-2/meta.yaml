@@ -1,0 +1,15 @@
+creation_timestamp: 1766860177454
+current_stage: Production
+deployment_job_state: null
+description: null
+last_updated_timestamp: 1766860177485
+model_id: m-aed6bce7680e460fba288984a267dfa3
+name: churn-prediction
+run_id: 860e4e8303ef473fa45d2e611d081992
+run_link: null
+source: models:/m-aed6bce7680e460fba288984a267dfa3
+status: READY
+status_message: null
+storage_location: file:C:\Users\nikit\Desktop\Новая папка\mlops-project\mlruns/954541376659815502/models/m-aed6bce7680e460fba288984a267dfa3/artifacts
+user_id: null
+version: 2

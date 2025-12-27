@@ -1,0 +1,30 @@
+groups:
+  - name: churn-api-alerts
+    rules:
+      - alert: ChurnApiHighLatency
+        expr: |
+          (
+            rate(churn_prediction_request_latency_seconds_sum[2m])
+            /
+            rate(churn_prediction_request_latency_seconds_count[2m])
+          ) > 0.5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High latency on churn-api"
+          description: "Average request latency > 500ms for 2 minutes."
+
+      - alert: ChurnApiHighErrorRate
+        expr: |
+          (
+            rate(churn_prediction_errors_total[2m])
+            /
+            rate(churn_prediction_requests_total[2m])
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on churn-api"
+          description: "Error rate > 5% for 2 minutes."

@@ -1,0 +1,23 @@
+artifact_path: "file:C:\\Users\\nikit\\Desktop\\\u041D\u043E\u0432\u0430\u044F \u043F\
+  \u0430\u043F\u043A\u0430\\mlops-project\\mlruns/954541376659815502/models/m-aed6bce7680e460fba288984a267dfa3/artifacts"
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.13.2
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.8.0
+mlflow_version: 3.8.1
+model_id: m-aed6bce7680e460fba288984a267dfa3
+model_size_bytes: 348887
+model_uuid: m-aed6bce7680e460fba288984a267dfa3
+prompts: null
+run_id: 860e4e8303ef473fa45d2e611d081992
+utc_time_created: '2025-12-27 18:29:33.569100'

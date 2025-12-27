@@ -1,0 +1,10 @@
+artifact_location: file:C:\Users\nikit\Desktop\Новая папка\mlops-project\mlruns/954541376659815502/models/m-515e701c91d34738bf3d35d14817bde8/artifacts
+creation_timestamp: 1766858387615
+experiment_id: '954541376659815502'
+last_updated_timestamp: 1766858392053
+model_id: m-515e701c91d34738bf3d35d14817bde8
+model_type: null
+name: model
+source_run_id: f52bee18ab014156ad03f7d69c3b2b5f
+status: 2
+status_message: null

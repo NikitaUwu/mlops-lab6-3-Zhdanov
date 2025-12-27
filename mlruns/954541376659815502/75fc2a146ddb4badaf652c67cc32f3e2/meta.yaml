@@ -1,0 +1,14 @@
+artifact_uri: file:C:\Users\nikit\Desktop\Новая папка\mlops-project\mlruns/954541376659815502/75fc2a146ddb4badaf652c67cc32f3e2/artifacts
+end_time: 1766858395945
+entry_point_name: ''
+experiment_id: '954541376659815502'
+lifecycle_stage: active
+run_id: 75fc2a146ddb4badaf652c67cc32f3e2
+run_name: dashing-shad-255
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1766858395918
+status: 3
+tags: []
+user_id: nikit

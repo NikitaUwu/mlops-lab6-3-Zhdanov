@@ -1,0 +1,54 @@
+services:
+  churn-api:
+    build: .
+    container_name: churn-api
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    environment:
+      - MODEL_PATH=models/model.joblib
+      - ENABLE_PROMETHEUS=1
+      - PROMETHEUS_METRICS_PORT=8001
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+    depends_on:
+      - churn-api
+      - alertmanager
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    depends_on:
+      - alertgram
+
+  alertgram:
+    image: slok/alertgram:latest
+    container_name: alertgram
+    ports:
+      - "8080:8080"   # webhook /alerts
+      - "8081:8081"   # metrics /metrics (optional)
+    environment:
+      - ALERTGRAM_TELEGRAM_API_TOKEN=${ALERTGRAM_TELEGRAM_API_TOKEN}
+      - ALERTGRAM_TELEGRAM_CHAT_ID=${ALERTGRAM_TELEGRAM_CHAT_ID}
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus

@@ -1,0 +1,14 @@
+artifact_uri: file:C:\Users\nikit\Desktop\Новая папка\mlops-project\mlruns/954541376659815502/860e4e8303ef473fa45d2e611d081992/artifacts
+end_time: 1766860177510
+entry_point_name: ''
+experiment_id: '954541376659815502'
+lifecycle_stage: active
+run_id: 860e4e8303ef473fa45d2e611d081992
+run_name: tasteful-fawn-809
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1766860173320
+status: 3
+tags: []
+user_id: nikit
