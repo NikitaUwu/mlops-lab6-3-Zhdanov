@@ -75,3 +75,37 @@ stages:
       hash: md5
       md5: 5e8e741c686c07b30b481f0c7fc6deaa
       size: 191507
+  monitor:
+    cmd: python src/monitor_drift.py --reference data/processed/train.csv 
+      --current data/processed/test.csv --model-path models/model.joblib 
+      --out-dir reports
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: c112f555740fa3bda3a3559ae194ccc9
+      size: 38370
+    - path: data/processed/train.csv
+      hash: md5
+      md5: afbdd9ff31194f5a2159f24c2f6cf4e5
+      size: 153234
+    - path: models/model.joblib
+      hash: md5
+      md5: 43e26aa1bd45d7fd3cdcbbd6bec3aee6
+      size: 353947
+    - path: src/monitor_drift.py
+      hash: md5
+      md5: bc64104d8114e4e24cfebba8ed2a27ec
+      size: 10176
+    outs:
+    - path: reports/data_drift_evidently.html
+      hash: md5
+      md5: dfbdd2fe36ae057965d603d577c50ae1
+      size: 667
+    - path: reports/drift_metrics.json
+      hash: md5
+      md5: 654fb07cc76bc64b9bd070bf7798d86b
+      size: 1245
+    - path: reports/evidently_error.txt
+      hash: md5
+      md5: a869674cf454dbb533ff005c64dbad01
+      size: 144
