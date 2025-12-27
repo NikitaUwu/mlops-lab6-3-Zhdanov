@@ -1,0 +1,27 @@
+# Core ML
+pandas
+numpy
+scikit-learn
+joblib
+
+# MLflow + registry
+mlflow
+
+# DVC
+dvc[s3]
+
+# Data validation
+great-expectations
+
+# Monitoring / drift
+evidently
+prometheus_client
+
+# Online inference
+fastapi
+uvicorn[standard]
+pydantic
+
+# Testing
+pytest
+requests

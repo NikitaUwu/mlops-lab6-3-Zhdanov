@@ -26,69 +26,49 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
 
-          # requirements.txt у вас пустой — этот блок не сломает сборку, если вы начнёте его заполнять позже
-          if (Test-Path "requirements.txt") {
-            $nonEmpty = (Get-Content "requirements.txt" | Where-Object { $_.Trim() -ne "" } | Measure-Object).Count
-            if ($nonEmpty -gt 0) {
-              python -m pip install -r requirements.txt
-            }
-          }
-
-          python -m pip install mlflow "dvc[s3]" great-expectations evidently feast
-
-      - name: Pull data with DVC (only if remote configured)
+      - name: Start MLflow server (SQLite backend for Model Registry)
         run: |
-          $remotes = (python -m dvc remote list 2>$null)
-          if ($LASTEXITCODE -eq 0 -and $remotes) {
-            python -m dvc pull
-          } else {
-            Write-Host "DVC remote is not configured. Skipping 'dvc pull'."
-          }
+          $db = Join-Path $env:GITHUB_WORKSPACE "mlflow.db"
+          $art = Join-Path $env:GITHUB_WORKSPACE "mlartifacts"
+          New-Item -ItemType Directory -Force -Path $art | Out-Null
 
-      - name: Ensure dataset exists
+          Start-Process -NoNewWindow -PassThru -FilePath python -ArgumentList @(
+            "-m","mlflow","server",
+            "--host","127.0.0.1",
+            "--port","5000",
+            "--backend-store-uri","sqlite:///$db",
+            "--default-artifact-root",$art
+          ) | Out-Null
+
+          "MLFLOW_TRACKING_URI=http://127.0.0.1:5000" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          "MLFLOW_REGISTRY_URI=http://127.0.0.1:5000" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          "MLFLOW_EXPERIMENT_NAME=customer-churn-prediction" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+          Start-Sleep -Seconds 3
+
+      - name: Reproduce pipeline with DVC
         run: |
-          if (-not (Test-Path "data\raw\dataset.csv")) {
-            Write-Error "data\raw\dataset.csv not found. Either (1) configure DVC remote + dvc pull, or (2) commit the dataset into the repo."
-            exit 1
-          }
-
-      - name: Run data validation (optional)
-        run: |
-          if (Test-Path "src\validate_data.py") {
-            python src\validate_data.py
-          } else {
-            Write-Host "src\validate_data.py not found. Skipping validation."
-          }
-
-      - name: Train model
-        run: python src\train.py
-
-      - name: Evaluate model
-        run: python src\evaluate.py
+          python -m dvc --version
+          python -m dvc repro
 
       - name: Check model quality (F1 >= 0.85)
         run: |
-          $code = @"
-import json, sys
-from pathlib import Path
+          $p = "metrics\metrics.json"
+          if (-not (Test-Path $p)) { throw "metrics/metrics.json not found. Ensure evaluate.py writes it." }
 
-p = Path("metrics.json")
-if not p.exists():
-    print("metrics.json not found. Ensure evaluate.py writes it.", file=sys.stderr)
-    sys.exit(1)
+          $m = Get-Content $p -Raw | ConvertFrom-Json
+          if ($null -eq $m.f1) { throw "metrics.json does not contain 'f1'." }
 
-m = json.loads(p.read_text(encoding="utf-8"))
-if "f1" not in m:
-    print("metrics.json does not contain 'f1' key.", file=sys.stderr)
-    sys.exit(1)
+          $f1 = [double]$m.f1
+          Write-Host ("F1=" + $f1)
 
-f1 = float(m["f1"])
-print(f"F1={f1}")
-if f1 < 0.85:
-    print(f"Model quality is too low: {f1} < 0.85", file=sys.stderr)
-    sys.exit(1)
-"@
+          if ($f1 -lt 0.85) { throw ("Model quality is too low: " + $f1 + " < 0.85") }
 
-          $code | Out-File -Encoding utf8 .\_check_f1.py
-          python .\_check_f1.py
+      - name: Upload metrics artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics
+          path: metrics/metrics.json
+          if-no-files-found: error

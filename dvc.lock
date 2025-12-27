@@ -1,0 +1,60 @@
+schema: '2.0'
+stages:
+  validate:
+    cmd: python src/validate_data.py
+    deps:
+    - path: data/raw/dataset.csv
+      hash: md5
+      md5: 5e8e741c686c07b30b481f0c7fc6deaa
+      size: 191507
+    - path: src/validate_data.py
+      hash: md5
+      md5: 83a47b25574f3c7ccb5840214a380498
+      size: 2810
+  preprocess:
+    cmd: python src/preprocess.py
+    deps:
+    - path: data/raw/dataset.csv
+      hash: md5
+      md5: 5e8e741c686c07b30b481f0c7fc6deaa
+      size: 191507
+    - path: src/preprocess.py
+      hash: md5
+      md5: a619f0a6f8a514f4445e241884742825
+      size: 1029
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: c112f555740fa3bda3a3559ae194ccc9
+      size: 38370
+    - path: data/processed/train.csv
+      hash: md5
+      md5: afbdd9ff31194f5a2159f24c2f6cf4e5
+      size: 153234
+  train:
+    cmd: python src/train.py
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: afbdd9ff31194f5a2159f24c2f6cf4e5
+      size: 153234
+    - path: src/train.py
+      hash: md5
+      md5: 9ec351211eae4cdf8e46678c0f5442ae
+      size: 2781
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: c112f555740fa3bda3a3559ae194ccc9
+      size: 38370
+    - path: src/evaluate.py
+      hash: md5
+      md5: a8167a67a9d79c0d32fa871501f33b06
+      size: 1784
+    outs:
+    - path: metrics/metrics.json
+      hash: md5
+      md5: 60184a774c0f48f331605718df3f419c
+      size: 97
