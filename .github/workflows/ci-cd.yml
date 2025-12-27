@@ -78,3 +78,79 @@ jobs:
           name: metrics
           path: metrics/metrics.json
           if-no-files-found: error
+
+  docker-smoke:
+    needs: build-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Start MLflow server (SQLite backend for Model Registry)
+        run: |
+          mkdir -p mlartifacts
+          nohup python -m mlflow server \
+            --host 127.0.0.1 \
+            --port 5000 \
+            --backend-store-uri sqlite:///mlflow.db \
+            --default-artifact-root ./mlartifacts \
+            > mlflow_server.log 2>&1 &
+          echo "MLFLOW_TRACKING_URI=http://127.0.0.1:5000" >> $GITHUB_ENV
+          echo "MLFLOW_REGISTRY_URI=http://127.0.0.1:5000" >> $GITHUB_ENV
+          echo "MLFLOW_EXPERIMENT_NAME=customer-churn-prediction" >> $GITHUB_ENV
+          sleep 3
+
+      - name: Reproduce pipeline with DVC (build exported model)
+        run: |
+          dvc repro
+          test -f models/model.joblib
+
+      - name: Build Docker image
+        run: |
+          docker build -t churn-api:ci .
+
+      - name: Run container
+        run: |
+          docker run -d --rm --name churn-api -p 8000:8000 -p 8001:8001 churn-api:ci
+
+      - name: Wait for /health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8000/health >/dev/null; then
+              echo "Service is up"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Service did not become ready"
+          docker logs churn-api || true
+          exit 1
+
+      - name: Smoke test /health and /predict
+        run: |
+          curl -fsS http://localhost:8000/health
+
+          resp="$(curl -fsS -X POST http://localhost:8000/predict \
+            -H 'Content-Type: application/json' \
+            -d '{"customer_id":"C999999","tenure":12,"monthly_charges":75.5,"total_charges":850.0,"gender":"M","senior_citizen":0,"partner":"No","dependents":"No"}')"
+
+          echo "$resp" | grep -q '"customer_id":"C999999"'
+          echo "$resp" | grep -q '"churn_prediction"'
+          echo "$resp" | grep -q '"churn_probability"'
+
+      - name: Stop container
+        if: always()
+        run: |
+          docker stop churn-api || true
