@@ -1,0 +1,131 @@
+name: Monitoring + Conditional Retraining
+
+on:
+  schedule:
+    # Every Monday 06:00 UTC
+    - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+
+jobs:
+  monitor-and-retrain:
+    runs-on: ubuntu-latest
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Start MLflow server (SQLite backend for Model Registry)
+        run: |
+          mkdir -p mlartifacts
+          nohup python -m mlflow server \
+            --host 127.0.0.1 \
+            --port 5000 \
+            --backend-store-uri sqlite:///mlflow.db \
+            --default-artifact-root ./mlartifacts \
+            > mlflow_server.log 2>&1 &
+          echo "MLFLOW_TRACKING_URI=http://127.0.0.1:5000" >> $GITHUB_ENV
+          echo "MLFLOW_REGISTRY_URI=http://127.0.0.1:5000" >> $GITHUB_ENV
+          echo "MLFLOW_EXPERIMENT_NAME=customer-churn-prediction" >> $GITHUB_ENV
+          sleep 3
+
+      - name: Run monitoring stage (DVC)
+        run: |
+          dvc repro monitor
+          test -f reports/drift_metrics.json
+
+      - name: Decide whether retraining is needed
+        id: decide
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          p = Path("reports/drift_metrics.json")
+          d = json.loads(p.read_text(encoding="utf-8"))
+          s = d.get("summary", {})
+
+          psi_thr = float(s.get("psi_threshold", 0.2))
+          pred_psi = float(s.get("prediction_psi", 0.0))
+          psi_max = float(s.get("psi_max", 0.0))
+          alerts = s.get("alerts", []) or []
+
+          should = False
+          if pred_psi > psi_thr:
+              should = True
+          if psi_max > psi_thr:
+              should = True
+          if any(a.get("severity") in ("warning", "critical") for a in alerts):
+              should = True
+
+          msg = (
+              f"Monitoring summary: prediction_psi={pred_psi:.4f}, "
+              f"psi_max={psi_max:.4f}, psi_threshold={psi_thr:.2f}, "
+              f"alerts={len(alerts)}"
+          )
+
+          Path("decision.txt").write_text(msg, encoding="utf-8")
+
+          out_path = os.environ.get("GITHUB_OUTPUT")
+          if not out_path:
+              raise SystemExit("GITHUB_OUTPUT is not set")
+
+          with open(out_path, "a", encoding="utf-8") as f:
+              f.write(f"should_retrain={'true' if should else 'false'}\n")
+              # безопаснее без спецсимволов/переводов строк
+              f.write("message=" + msg.replace("\n", " ").replace("\r", " ") + "\n")
+
+          print(msg)
+          print("should_retrain =", should)
+          PY
+
+      - name: Retrain + re-evaluate + re-monitor (conditional)
+        if: steps.decide.outputs.should_retrain == 'true'
+        run: |
+          dvc repro train evaluate monitor
+
+      - name: Upload monitoring artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-reports
+          path: |
+            reports/drift_metrics.json
+            reports/data_drift_evidently.html
+            reports/evidently_error.txt
+            decision.txt
+          if-no-files-found: error
+
+      - name: Upload model + metrics (if retrained)
+        if: steps.decide.outputs.should_retrain == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: retrain-artifacts
+          path: |
+            models/model.joblib
+            metrics/metrics.json
+          if-no-files-found: error
+
+      - name: Telegram notification (optional)
+        if: always() && env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        run: |
+          STATUS="${{ job.status }}"
+          SHOULD="${{ steps.decide.outputs.should_retrain }}"
+          MSG="${{ steps.decide.outputs.message }}"
+          TEXT="[$STATUS] Monitoring job. should_retrain=$SHOULD. $MSG"
+          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=$TEXT"
