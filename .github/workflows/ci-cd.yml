@@ -53,6 +53,12 @@ jobs:
           python -m dvc --version
           python -m dvc repro
 
+      - name: Run tests (inference + unit)
+        env:
+          ENABLE_PROMETHEUS: "0"
+        run: |
+          pytest -q
+
       - name: Check model quality (F1 >= 0.85)
         run: |
           $p = "metrics\metrics.json"
